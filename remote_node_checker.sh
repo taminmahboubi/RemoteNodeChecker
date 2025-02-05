@@ -6,6 +6,9 @@ NODES=("node1.example.com" "node2.example.com")
 # Expected kernel version 
 REQUIRED_KERNEL="5.4.0-100"
 
+# Minimum disk space required (in GB)
+MIN_DISK_GB=50
+
 # Function to check SSH connectivity 
 check_ssh() {
 	local node="$1"
@@ -26,9 +29,17 @@ check_ssh() {
 	else
 		echo "[$node] Kernel mismatch: expected $REQUIRED_KERNEL, found $kernel"
 	fi
+
+	# Check Disk Space
+	disk_space=$(ssh "$node" "df -BG / | awk 'NR==2{print \$4}' | tr -d 'G'")
+	if (( disk_space >= MIN_DISK_GB )); then
+		echo "[$node] Sufficient disk space available (${disk_space}GB)"
+	else
+		echo "[$node] Low disk space: only ${disk_space}GB available (minimum required: ${MIN_DISK_GB}GB)"
+	fi
 }
 
-# Loop through each node and check SSH
+# Loop through each node and check SSH + Kernel + Disk
 for node in "${NODES[@]}"; do
 	check_ssh "$node"
 done

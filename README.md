@@ -115,7 +115,7 @@ for node in "${NODES[@]}"; do
 done
 ```
 ---------------------------------------------------------------------------------------------
-<u>**Version 2.0: Kernel Validation Added**</u>
+**Version 2.0: Kernel Validation Added**
 
 1. Added a variable for storing the required kernel version:
 `REQUIRED_KERNEL="5.4.0-100"`
@@ -178,3 +178,50 @@ done
 ```
 	
 -------------------------------------------------------------------------------------------------
+**Version 3.0: Disk Space Validation Added**
+
+1. Add a variable to store the minimum disk space required (in GB)
+`MIN_DISK_GB=50`
+	- defines the minimum required disk space 
+
+
+
+2. Check Disk Space
+
+	- Retrieve Disk Space information:
+`disk_space=$(ssh "$node" "df -BG / | awk 'NR==2{print \$4}' | tr -d 'G'")`
+	- runs `df -BG /` on the remote node to check disk space on the root `/`
+	- uses `awk` to extract the available space
+		- `awk` is a text-processing tool in linux, it reads input line-by-line, allowing us to manipulate text based on patterns.
+		- `NR==2` refers to the current line number, so it only processes line 2
+		- `{print $4}` prints column 4 (**available space** column from the `df -BG /` output, shown below)
+		- `re -d 'G'` removes the "G" so we can compare it as a number
+
+`df -BG /` will output something like:
+
+```
+Filesystem     1G-blocks  Used Available Use% Mounted on
+/dev/sda1          100G    40G       60G  40% /
+```
+
+`NR==1` will be the header block(Line 1):
+`Filesystem     1G-blocks  Used Available Use% Mounted on`
+
+we need (Line 2), `NR==2`: 
+`/dev/sda1          100G    40G       60G  40% /`
+
+|**Column($1,$2,etc)** |                 ** Value**                  |
+|----------------------|---------------------------------------------|
+|$1                    |/dev/sda1                                    |
+|----------------------|---------------------------------------------|
+|$2                    |100G(Total disk space)                       |
+|----------------------|---------------------------------------------|
+|$3                    |40G(Used space)                              |
+|----------------------|---------------------------------------------|
+|$4                    |60G(Available space, we need this!)          |
+|----------------------|---------------------------------------------|
+|$5                    |40%(Usage percentage)                        |
+|----------------------|---------------------------------------------|
+|$6                    |/(Mount point)                               |
+|----------------------|---------------------------------------------|
+	
