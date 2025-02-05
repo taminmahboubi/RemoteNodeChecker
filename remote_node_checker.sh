@@ -3,6 +3,9 @@
 # Define the list of nodes 
 NODES=("node1.example.com" "node2.example.com")
 
+# Expected kernel version 
+REQUIRED_KERNEL="5.4.0-100"
+
 # Function to check SSH connectivity 
 check_ssh() {
 	local node="$1"
@@ -13,7 +16,16 @@ check_ssh() {
 	else
 		echo "[$node] SSH FAILED"
 	fi
-	
+
+
+
+	# Check Kernel version
+	kernel=$(ssh "$node" "uname -r")
+	if [[ "Skernel" == "$REQUIRED_KERNEL" ]]; then
+		echo "[$node] Kernel version is correct ($kernel)"
+	else
+		echo "[$node] Kernel mismatch: expected $REQUIRED_KERNEL, found $kernel"
+	fi
 }
 
 

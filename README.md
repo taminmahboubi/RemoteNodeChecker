@@ -114,3 +114,29 @@ for node in "${NODES[@]}"; do
     check_ssh "$node"
 done
 ```
+---------------------------------------------------------------------------------------------
+<u>**Version 2.0: Kernel Validation Added**</u>
+
+1. Added a variable for storing the required kernel version:
+`REQUIRED_KERNEL="5.4.0-100"`
+-makes it easy to update the requirement without having to modify it in multiplaces within the script.
+
+
+within the `check_node` function, we want to retrieve kernel version:
+`kernel=$(ssh "$node" "uname -r")`
+
+	- `uname -r` prints the kernel version currently running on a system
+	- stores the kernel version of from the remote machine into `kernel` variable
+
+
+2. Compare Kernel Version to `REQUIRED_KERNEL`
+```
+if [[ "$kernel" == "$REQUIRED_KERNEL" ]]; then
+	echo "[$node] Kernel version is correct ($kernel)"
+else
+	echo "[$node] Kernel mismatch: expected $REQUIRED_KERNEL, found $kernel"
+fi 	
+```
+	- Checks if the retrieved kernel version matches the expected one (REQUIRED_KERNEL)
+	- prints a different message depending if the match was successful or not.
+	
