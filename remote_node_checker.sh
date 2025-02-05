@@ -28,7 +28,6 @@ check_ssh() {
 	fi
 }
 
-
 # Loop through each node and check SSH
 for node in "${NODES[@]}"; do
 	check_ssh "$node"
