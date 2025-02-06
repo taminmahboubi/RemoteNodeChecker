@@ -12,15 +12,20 @@ MIN_DISK_GB=50
 # Required security package
 REQUIRED_PKG="security-pkg"
 
+# Banned services that should not be running
+BANNED_SERVICES=("telnetd" "httpd")
+
 # Function to check SSH connectivity 
 check_ssh() {
 	local node="$1"
+	local ssh_ok=true
 
 	# Attempt the SSH connection with a timeout
 	if ssh -o ConnectTimeout=5 -q "$node" exit; then
 		echo "[$node] SSH connection successful"
 	else
 		echo "[$node] SSH FAILED"
+#		return
 	fi
 
 
@@ -31,6 +36,7 @@ check_ssh() {
 		echo "[$node] Kernel version is correct ($kernel)"
 	else
 		echo "[$node] Kernel mismatch: expected $REQUIRED_KERNEL, found $kernel"
+		ssh_ok=false
 	fi
 
 	# Check Disk Space
@@ -39,16 +45,28 @@ check_ssh() {
 		echo "[$node] Sufficient disk space available (${disk_space}GB)"
 	else
 		echo "[$node] Low disk space: only ${disk_space}GB available (minimum required: ${MIN_DISK_GB}GB)"
+		ssh_ok=false
 	fi
 
-	# Check Package
+	# Check is required package is installed
 	if  ssh "$node" "dpkg -l | grep -q '^ii.*REQUIRED_PKG'"; then
 		echo "[$node] $REQUIRED_PKG Installed."
 	else
 		echo "[$node] Missing required package: $REQUIRED_PKG"
+		ssh_ok=false
 	fi
 
-	
+	# Check for banned services
+	for service in "${BANNED_SERVICES[@]}"; do
+		if ssh "$node" "systemctl is-active --quiet $service"; then
+			echo "[$node] Banned service running: $service"
+			ssh_ok=false
+		fi
+	done
+
+
+	# Final compliance check
+	$ssh_ok && echo "[$node] Configuration OK"
 
 
 	

@@ -259,5 +259,31 @@ runs this entire command on the remote node via ssh:
 	- `ii` matches the two characters ii, meaning the package is installed
 	- `.*` matches any character (except newline)
 	- `$REQUIRED_PKG` the name of the package we're looking for
+----------------------------------------------------------------------------------------------------
+**Version 5.0: Banned services validation + global status tracker (ssh_ok)**
 
+1. Implementing `ssh_ok` for node status tracking
+`local ssh_ok=true`
+	- initialize `ssh_ok` to **true** at the start of `check_node()` function
+	- this means the node/server is assumed to have no issues (unless its changed to false)
+
+2. setting `ssh_ok` to false when a check fails
+- add `ssh_ok=false` whenever one of the services fails (within its if statements)
+
+3. Checking for Banned services
+```
+for service in "${BANNED_SERVICES[@]}"; do
+	if ssh "$node" "systemctl is-active --quiet $service"; then
+		echo "[$node] Banned service running: $service"
+		ssh_ok=false
+	fi
+done
+```
+	- loops through each banned service in the `$BANNED_SERVICES` array
+	- if the service is **NOT** running, command fails, nothing happens
+	- if the servie **IS** running, command succeeds, prints a warning and sets `ssh_ok=false`
+
+4. Printing success only if all the checks pass
+`$ssh_ok && echo "[$node] Configuration OK!"`
+	- if `ssh_ok` is still `true` at the end, it prints the message.
 
