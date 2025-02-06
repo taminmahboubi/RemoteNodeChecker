@@ -287,3 +287,43 @@ done
 `$ssh_ok && echo "[$node] Configuration OK!"`
 	- if `ssh_ok` is still `true` at the end, it prints the message.
 
+--------------------------------------------------------------------------------------------------
+**Version 6.0: Logging System for Audit & Truoubleshooting**
+
+-This will log all outputs to a file, making it easier to track nodes.
+
+1. Define the Log file name
+`LOG_FILE="nodevalidation_$(date +%Y%m%d).log"`
+	- defines a log filename that includes the current date
+	- this helps to make sure new logs don't overwrite old ones!
+
+2. Redirecting all output to the log file
+`exec > >(tee -a "$LOG_FILE") 2>&1`
+	- redirects all script output (both `stdout` and `stderr`) to:
+		- the log file `$LOG_FILE`
+		- the terminal `tee`, so we still see a live output.
+
+3. Add Visual Markets for each node
+Simple, just make the output more readable!
+```
+echo "===== Checking Node: $node ====="
+echo "===== Finished Checking: $node ====="
+```
+
+4. Running checks in paralell (for speed)
+edit the code to include `&` -sends it to the background(below)
+```
+for node in "${NODES[@]}"; do
+	check_node "$node" &                        <----here!
+done
+
+wait # wait for all parallel checks
+```
+	- `wait` ensures all parallel processes are finished before continuing
+
+
+5. Summary message
+`echo "Validation complete. Review $LOG_FILE"`
+	- prints the log file location after all the checks finish
+	- useful for finding the log more easily
+
