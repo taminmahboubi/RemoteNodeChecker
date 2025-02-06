@@ -9,6 +9,9 @@ REQUIRED_KERNEL="5.4.0-100"
 # Minimum disk space required (in GB)
 MIN_DISK_GB=50
 
+# Required security package
+REQUIRED_PKG="security-pkg"
+
 # Function to check SSH connectivity 
 check_ssh() {
 	local node="$1"
@@ -37,6 +40,18 @@ check_ssh() {
 	else
 		echo "[$node] Low disk space: only ${disk_space}GB available (minimum required: ${MIN_DISK_GB}GB)"
 	fi
+
+	# Check Package
+	if  ssh "$node" "dpkg -l | grep -q '^ii.*REQUIRED_PKG'"; then
+		echo "[$node] $REQUIRED_PKG Installed."
+	else
+		echo "[$node] Missing required package: $REQUIRED_PKG"
+	fi
+
+	
+
+
+	
 }
 
 # Loop through each node and check SSH + Kernel + Disk

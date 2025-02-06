@@ -218,4 +218,46 @@ we need (Line 2), `NR==2`:
 |$4                    |60G(Available space, we need this!)          |
 |$5                    |40%(Usage percentage)                        |
 |$6                    |/(Mount point)                               |
+
+```
+if (( disk_space >= MIN_DISK_GB )); then
+    echo "[$node] Sufficient disk space available (${disk_space}GB)"
+else
+    echo "[$node] Low disk space: only ${disk_space}GB available (minimum required: ${MIN_DISK_GB}GB)"
+fi
+
+```
 	
+-----------------------------------------------------------------------------------------------
+**Version 4.0: Required security package check**
+
+1. Add a variable to store the name of the required (security) package
+`REQUIRED_PKG="security-pkg"` 
+(this could also be an array of variables if there are more than one required packages)
+
+
+2. Package validation command
+```
+if ssh "$node" "dpkg -l | grep -q '^ii.*$REQUIRED_PKG'"; then
+	echo "[$node] Required package '$REQUIRED_PKG' is installed"
+else
+	echo "[$node] Missing required package: $REQUIRED_PACKAGE"
+fi
+```
+
+**Breakdown:**
+runs this entire command on the remote node via ssh:
+`dpkg -l | grep -q '^ii.*security-pkg'`
+	- if the package is found it prints success
+	- if the package is missing, it prints a warning
+
+**dpkg command:**
+- `dpkg -l` lists all installed packages
+- `grep -q` searches the file for a specific pattern, if its found it exits with a success status of **0**. if not found within file it exits with a non-zero status.
+- `'^ii.*$REQUIRED_PKG'`
+	- `^` matches the beginning of a line
+	- `ii` matches the two characters ii, meaning the package is installed
+	- `.*` matches any character (except newline)
+	- `$REQUIRED_PKG` the name of the package we're looking for
+
+
